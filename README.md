@@ -1,5 +1,8 @@
 # TrIM: Transformed Iterative Mondrian Forests for Gradient-based Dimension Reduction and High-Dimensional Regression
 
+Ricardo Baptista, Eliza O’Reilly, and Yangxinyu Xie
+
+## Introduction
 This is the official implementation of the TrIM algorithm, as described in the paper: [TrIM: Transformed Iterative Mondrian Forests for Gradient-based Dimension Reduction and High-Dimensional Regression]().
 
 ## Requirements
@@ -14,4 +17,10 @@ pip install -r requirements.txt
 ```
 
 ## Implementations of TrIM
-The TrIM algorithm is implemented in the `src/Mondrian_RF` folder. 
+The TrIM algorithm is implemented in the `src/Mondrian_RF` folder. Part of the code is based on the [Mondrian Forests](https://github.com/matejbalog/mondrian-kernel) implementation by Matej Balog.
+
+## Experiments
+The experiments in the paper can be reproduced by running the following scripts:
+- `src/Simulations.ipynb`: Simulation experiments
+- `src/Ebola.ipynb`: Ebola experiments
+- `src/eval.py`: Real data experiments on machine learning datasets
