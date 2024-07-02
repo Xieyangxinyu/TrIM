@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from numpy.linalg import qr, svd, eig
 from tqdm import tqdm
-from Mondrian_RF.Mondrian_forest import MondrianForestTransformer
+from Mondrian_RF.Mondrian_forest import TrIM
 from Mondrian_RF.utils import evaluate_all_lifetimes, two_one_norm
 from matplotlib.ticker import ScalarFormatter
 
@@ -138,7 +138,7 @@ class Simulation():
         for n_sim in self.sample_range:
             self.forests[n_sim] = []
             for trial in tqdm(range(self.tries)):
-                forest = MondrianForestTransformer(n_estimators=self.n_estimators, lifetime=self.lifetime, 
+                forest = TrIM(n_estimators=self.n_estimators, lifetime=self.lifetime, 
                                                    step_size=self.step_size, random_state=(n_sim + 1) * (trial + 1))
                 forest.fit(self.x_train[:n_sim], self.y_train[:n_sim])
                 self.forests[n_sim].append(forest)

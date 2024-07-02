@@ -7,7 +7,7 @@ from functools import partial
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import KFold
-from Mondrian_RF.Mondrian_forest import MondrianForestRegressor, MondrianForestTransformer
+from Mondrian_RF.Mondrian_forest import MondrianForestRegressor, TrIM
 from others.sir import SlicedInverseRegression
 from others.save import SlicedAverageVarianceEstimation
 from others.kernel_regression import fit_kernel_smoother_silverman
@@ -58,7 +58,7 @@ def benchmark(dataset, n_resamples=15, n_splits=10):
         'lifetime': [1, 2, 3, 4, 5]
     }
 
-    mft_parameters = {
+    trim_parameters = {
         'step_size': [0.1, 0.2, 0.5],
         'iteration': [1, 2]
     }
@@ -78,7 +78,7 @@ def benchmark(dataset, n_resamples=15, n_splits=10):
             'sir_rf': np.zeros(n_splits),
             'save_rf': np.zeros(n_splits),
             'mf': np.zeros(n_splits),
-            'mft': np.zeros(n_splits)
+            'trim': np.zeros(n_splits)
         }
 
         for k, (train, test) in enumerate(cv.split(X)):
@@ -135,11 +135,11 @@ def benchmark(dataset, n_resamples=15, n_splits=10):
             print(clf.best_params_)
             print(err)
 
-            mft = MondrianForestTransformer(mf = clf.best_estimator_)
-            clf = GridSearchCV(mft, mft_parameters, n_jobs=-1).fit(X_train, y_train)
+            trim = TrIM(mf = clf.best_estimator_)
+            clf = GridSearchCV(trim, trim_parameters, n_jobs=-1).fit(X_train, y_train)
             y_pred = clf.predict(X_test)
             err = np.mean((y_pred - y_test)**2)
-            results['mft'][k] = err
+            results['trim'][k] = err
             print(clf.best_params_)
             print(err)
 

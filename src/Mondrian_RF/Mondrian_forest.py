@@ -48,9 +48,9 @@ class MondrianForestRegressor(RegressorMixin):
                 }
 
 
-class MondrianForestTransformer(RegressorMixin):
+class TrIM(RegressorMixin):
     '''
-    MondrianForestTransformer is a class that implements the TrIM algorithm.
+    TrIM is a class that implements the TrIM algorithm.
     It is a regressor that uses Mondrian Forests to estimate the H matrix.
     The H matrix is a transformation matrix that is used to transform the input data.
     The transformed data is then used to train a new Mondrian Forest regressor.
