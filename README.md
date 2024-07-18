@@ -3,7 +3,7 @@
 Ricardo Baptista, Eliza O’Reilly, and Yangxinyu Xie
 
 ## Introduction
-This is the official implementation of the TrIM algorithm, as described in the paper: [TrIM: Transformed Iterative Mondrian Forests for Gradient-based Dimension Reduction and High-Dimensional Regression]().
+This is the official implementation of the TrIM algorithm, as described in the paper: [TrIM: Transformed Iterative Mondrian Forests for Gradient-based Dimension Reduction and High-Dimensional Regression](https://arxiv.org/abs/2407.09964).
 
 ## Requirements
 - Python 3.11
