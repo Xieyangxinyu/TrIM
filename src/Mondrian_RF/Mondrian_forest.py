@@ -78,7 +78,7 @@ class TrIM(RegressorMixin):
         self.y = None
         self.H = None
 
-    def estimate_H_finite_diff(self):
+    def _get_importance(self):
         importance = []
 
         for dim in range(self.X.shape[1]):
@@ -95,7 +95,13 @@ class TrIM(RegressorMixin):
             importance_temp = y_diff/self.step_size
             importance.append(importance_temp)
 
+        # the shape of importance is (n_features, n_samples)
         importance = np.vstack(importance)
+        return importance
+    
+
+    def estimate_H_finite_diff(self):
+        importance = self._get_importance()
         H = np.matmul(importance, np.transpose(importance))/self.X.shape[0]
         return H
     
@@ -109,8 +115,6 @@ class TrIM(RegressorMixin):
             for _ in range(self.iteration - 1):
                 self.reiterate()
             self.mf.fit(self.transform(deepcopy(self.X)), self.y)
-        
-
         return self
 
     def reiterate(self):
@@ -142,3 +146,22 @@ class TrIM(RegressorMixin):
                 "lifetime": self.mf.lifetime, 
                 "step_size": self.step_size
                 }
+
+
+class WeightedMondrianForestRegressor(TrIM):
+    '''
+    WeightedMondrianForestRegressor is a class that implements the Weighted Mondrian Forest algorithm.
+    
+    This is the same as the TrIM algorithm below, but H is axis-aligned (i.e., diagonal matrix).
+    '''
+
+    def __init__(self, mf: MondrianForestRegressor = None,
+                  n_estimators = 10, lifetime = 1, iteration = 1, step_size = 0.1, random_state = 42) -> None:
+        super().__init__(mf, n_estimators, lifetime, iteration, step_size, random_state)
+
+    def estimate_H_finite_diff(self):
+        importance = self._get_importance()
+        # H is the diagonal matrix of importance ** 2
+        # where each diagonal element is the sum of the corresponding row in importance ** 2
+        H = np.diag(np.sum(importance ** 2, axis=1))/self.X.shape[0]
+        return H

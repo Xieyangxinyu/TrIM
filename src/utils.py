@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from numpy.linalg import qr, svd, eig
 from tqdm import tqdm
-from Mondrian_RF.Mondrian_forest import TrIM
+from Mondrian_RF.Mondrian_forest import TrIM, WeightedMondrianForestRegressor
 from Mondrian_RF.utils import evaluate_all_lifetimes, two_one_norm
 from matplotlib.ticker import ScalarFormatter
 
@@ -139,7 +139,7 @@ class Simulation():
             self.forests[n_sim] = []
             for trial in tqdm(range(self.tries)):
                 forest = TrIM(n_estimators=self.n_estimators, lifetime=self.lifetime, 
-                                                   step_size=self.step_size, random_state=(n_sim + 1) * (trial + 1))
+                                step_size=self.step_size, random_state=(n_sim + 1) * (trial + 1))
                 forest.fit(self.x_train[:n_sim], self.y_train[:n_sim])
                 self.forests[n_sim].append(forest)
         plot_dist(self.forests, self.true_H, self.sample_range, self.active, self.tries)
@@ -215,3 +215,75 @@ class Simulation():
 
         # Apply the formatter to the y-axis
         plt.gca().yaxis.set_major_formatter(y_formatter)
+
+
+class SimulationAligned(Simulation):
+    def __init__(self, dim_in, active, n_estimators, tries, lifetime, step_size, sample_range, x_train, x_test, y_train, y_test, true_H):
+        super().__init__(dim_in, active, n_estimators, tries, lifetime, step_size, sample_range, x_train, x_test, y_train, y_test, true_H)
+        assert tries == 1
+
+    def evaluation_comparison(self, save_path=None):
+        x_test = self.x_test
+        y_test = self.y_test
+        for n_sim in tqdm(self.sample_range):
+            x_train = self.x_train[:n_sim]
+            y_train = self.y_train[:n_sim]
+            self.evaluation_results = []  # Reset evaluation results for each sample size
+            self.evaluation_results.append(
+                evaluate_all_lifetimes(x_train, y_train, x_test, y_test, self.n_estimators, self.lifetime))
+            
+            normalized_true_H = self.true_H / two_one_norm(self.true_H)
+            x_train_transformed = np.matmul(x_train, normalized_true_H)
+            x_test_transformed = np.matmul(x_test, normalized_true_H)
+            self.evaluation_results.append(
+                evaluate_all_lifetimes(x_train_transformed, y_train, x_test_transformed, y_test, self.n_estimators, self.lifetime))
+
+            forest = TrIM(n_estimators=self.n_estimators, lifetime=self.lifetime, 
+                          step_size=self.step_size, random_state=(n_sim + 1) * 2)
+            
+            forest.X = np.array(x_train)
+            forest.y = np.array(y_train)
+            forest.mf.set_random_state()
+            forest.mf.fit(forest.X, forest.y)
+
+            importance = forest._get_importance()
+
+            forest.H = np.matmul(importance, np.transpose(importance))/x_train.shape[0]
+            
+            x_train_transformed = forest.transform(x_train)
+            x_test_transformed = forest.transform(x_test)
+            self.evaluation_results.append(
+                evaluate_all_lifetimes(x_train_transformed, y_train, x_test_transformed, y_test, self.n_estimators, self.lifetime))
+            
+            forest.H = np.diag(np.sum(importance ** 2, axis=1))/x_train.shape[0]
+            
+            x_train_transformed = forest.transform(x_train)
+            x_test_transformed = forest.transform(x_test)
+            self.evaluation_results.append(
+                evaluate_all_lifetimes(x_train_transformed, y_train, x_test_transformed, y_test, self.n_estimators, self.lifetime))
+            
+            # Plot results for the current sample size
+            plt.figure()
+            plt.plot(self.evaluation_results[0][0]['times'], self.evaluation_results[0][0]['mse'], label='no transformation')
+            plt.plot(self.evaluation_results[1][0]['times'], self.evaluation_results[1][0]['mse'], label='transform by true H')
+            plt.plot(self.evaluation_results[2][0]['times'], self.evaluation_results[2][0]['mse'], label='TrIM')
+            plt.plot(self.evaluation_results[3][0]['times'], self.evaluation_results[3][0]['mse'], label='Weighted Mondrian')
+            
+            # Add labels and formatting
+            plt.title(f'Evaluation Comparison for Sample Size {n_sim}', fontsize=15)
+            plt.xlabel('Lifetime', fontsize=15)
+            plt.ylabel('MSE', fontsize=15)
+            plt.xticks(fontsize=15)
+            plt.yticks(fontsize=15)
+            plt.legend(fontsize=12)
+            y_formatter = ScalarFormatter(useOffset=False)
+            y_formatter.set_scientific(True)
+            y_formatter.set_powerlimits((-1, 1))  # Optional: adjust the range for using scientific notation
+
+            # Apply the formatter to the y-axis
+            plt.gca().yaxis.set_major_formatter(y_formatter)
+            if save_path:
+                plt.savefig(f'{save_path}_{n_sim}.png')
+            plt.show()
+
+            del forest

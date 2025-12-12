@@ -22,5 +22,6 @@ The TrIM algorithm is implemented in the `src/Mondrian_RF` folder. Part of the c
 ## Experiments
 The experiments in the paper can be reproduced by running the following scripts:
 - `src/Simulations.ipynb`: Simulation experiments
+- `src/SimulationsAligned.ipynb`: Simulation experiments for Weighted Mondrian Estimators
 - `src/Ebola.ipynb`: Ebola experiments
 - `src/eval.py`: Real data experiments on machine learning datasets
